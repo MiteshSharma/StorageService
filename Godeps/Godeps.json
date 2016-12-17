@@ -1,0 +1,26 @@
+{
+	"ImportPath": "github.com/MiteshSharma/StorageService",
+	"GoVersion": "go1.5",
+	"GodepVersion": "v75",
+	"Deps": [
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.11.0-25-g881bee4",
+			"Rev": "881bee4e20a5d11a6a88a5667c6f292072ac1963"
+		},
+		{
+			"ImportPath": "github.com/julienschmidt/httprouter",
+			"Comment": "v1.1-40-g5dd70ee",
+			"Rev": "5dd70ee059943e81987a817fa1a755b11dd119c1"
+		},
+		{
+			"ImportPath": "github.com/urfave/negroni",
+			"Comment": "v0.2.0-73-gcd97340",
+			"Rev": "cd9734011043904139c24dbad9a71b21f1586f36"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "d75a52659825e75fff6158388dddc6a5b04f9ba5"
+		}
+	]
+}

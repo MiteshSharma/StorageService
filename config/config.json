@@ -1,0 +1,11 @@
+{
+  "ServerConfig": {
+    "Port": ":8080"
+  },
+  "StorageConfig": {
+    "ProviderType": "File",
+    "FileStorage": {
+      "RootPath": "/Users/mitesh/Personal/bitbucket/content-api/StorageService/upload"
+    }
+  }
+}
