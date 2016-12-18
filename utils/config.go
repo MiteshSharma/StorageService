@@ -18,10 +18,17 @@ type ServerConfig struct {
 type StorageConfig struct {
 	ProviderType string
 	FileStorage FileStorageConfig
+	S3Storage S3StorageConfig
 }
 
 type FileStorageConfig struct {
 	RootPath string
+}
+
+type S3StorageConfig struct {
+	KeyId string
+	AccessKey string
+	Region string
 }
 
 func (o *Config) SaveDefaultConfigParams() {

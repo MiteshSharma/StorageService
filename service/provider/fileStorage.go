@@ -30,7 +30,7 @@ func (fs FileStorage) GetBuckets() ([]*data.Bucket, error) {
 
 	index := 0
 	for _, f := range files {
-		bucket := data.NewBucket(f.Name(), f.Size(), f.ModTime())
+		bucket := data.NewBucket(f.Name())
 		buckets[index] = bucket
 		index++
 	}
@@ -51,7 +51,7 @@ func (fs FileStorage)GetBucket(name string) (*data.Bucket, error) {
 		log.Debug("Error on reading file stat %v", err)
 		return &data.Bucket{}, err
 	}
-	return data.NewBucket(fInfo.Name(), fInfo.Size(), fInfo.ModTime()), nil
+	return data.NewBucket(fInfo.Name()), nil
 }
 
 func (fs FileStorage)CreateBucket(name string) (*data.Bucket, error) {

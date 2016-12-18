@@ -3,9 +3,14 @@
     "Port": ":8080"
   },
   "StorageConfig": {
-    "ProviderType": "File",
+    "ProviderType": "AWS",
     "FileStorage": {
-      "RootPath": "/Users/mitesh/Personal/bitbucket/content-api/StorageService/upload"
+      "RootPath": "/StorageService/upload"
+    },
+    "S3Config": {
+      "KeyId": "",
+      "AccessKey": "",
+      "Region": ""
     }
   }
 }
