@@ -4,15 +4,18 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/MiteshSharma/StorageService/service/data"
 	log "github.com/Sirupsen/logrus"
 	"net/http"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/MiteshSharma/StorageService/utils"
 	"time"
+	"fmt"
 )
 
 type S3Storage struct {
+	Session *session.Session
 	S3Connection *s3.S3
 }
 
@@ -23,8 +26,9 @@ func NewS3Storage() *S3Storage {
 	awsConfig := &aws.Config{
 		Region: aws.String("us-west-1"),
 	}
-	connection := s3.New(session.New(awsConfig))
-	return &S3Storage{S3Connection: connection}
+	session := session.New(awsConfig)
+	connection := s3.New(session)
+	return &S3Storage{Session: session, S3Connection: connection}
 }
 
 func (s3S S3Storage) GetBuckets() ([]*data.Bucket, error) {
@@ -68,6 +72,10 @@ func (s3S S3Storage)CreateBucket(name string) (*data.Bucket, error) {
 	_, err := s3S.S3Connection.CreateBucket(&req)
 	if err != nil {
 		log.Debug("Error on creating bucket %v", err)
+		return nil, err
+	}
+	if err = s3S.S3Connection.WaitUntilBucketExists(&s3.HeadBucketInput{Bucket: &name}); err != nil {
+		log.Debug("Failed to wait for bucket to exist %s, %s\n", name, err)
 		return nil, err
 	}
 	return data.NewBucket(name), nil
@@ -138,30 +146,24 @@ func (s3S S3Storage)RemoveFile(bucketName, name string) (error)  {
 	return nil
 }
 
-func (s3S S3Storage) UploadFile(bucketName string, request *http.Request, isStreaming bool) (*data.File, error)  {
-	if isStreaming == true {
-		return s3S.uploadFileStream(bucketName, request)
-	}
-	return s3S.uploadFileNormal(bucketName, request)
-}
-
-func (s3S S3Storage) uploadFileStream(bucketName string, request *http.Request) (*data.File, error)  {
-	return &data.File{}, nil
-}
-
-func (s3S S3Storage) uploadFileNormal(bucketName string, request *http.Request) (*data.File, error) {
+func (s3S S3Storage) UploadFile(bucketName string, request *http.Request) ([]*data.File, error)  {
+	uploader := s3manager.NewUploader(s3S.Session)
 	var fileName string
 	err := request.ParseMultipartForm(100000)
 	if err != nil {
 		log.Debug("Error parsing multipart form %v", err)
-		return &data.File{}, err
+		return nil, err
 	}
 
 	//get a ref to the parsed multipart form
 	m := request.MultipartForm
+	fmt.Println("Reading form data")
 
+	//get the *fileheaders
 	files := m.File["file"]
-
+	fmt.Println("File size %ld", len(files))
+	fileList := make([]*data.File, len(files))
+	index := 0
 	for i, _ := range files {
 		fileName = files[i].Filename
 		//for each fileheader, get a handle to the actual file
@@ -169,19 +171,24 @@ func (s3S S3Storage) uploadFileNormal(bucketName string, request *http.Request) 
 		defer file.Close()
 		if err != nil {
 			log.Debug("Error opening file received %v", err)
-			return &data.File{}, err
+			return nil, err
 		}
-		params := &s3.PutObjectInput{
+		//create destination file making sure the path is writeable.
+		result, err := uploader.Upload(&s3manager.UploadInput{
 			Bucket: aws.String(bucketName),
 			Key:    aws.String(fileName),
+			ACL: 	aws.String("public-read"),
 			Body:   file,
-		}
-		_, err = s3S.S3Connection.PutObject(params)
+		})
 		if err != nil {
-			log.Debug("Upload to s3 failed %v", err)
-			return &data.File{}, err
+			log.Debug("Failed to upload %v", err)
+		} else {
+			fmt.Println("Upload successful with uploadId "+result.UploadID)
 		}
-
+		fileObj, _ := s3S.GetFile(bucketName, fileName)
+		fileList[index] = fileObj
+		index++
 	}
-	return s3S.GetFile(bucketName, fileName)
+
+	return fileList, nil
 }

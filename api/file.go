@@ -82,9 +82,9 @@ func uploadFile(rw http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	var file *data.File
+	var file []*data.File
 	var err error
-	if file, err = ServerObj.StorageService.UploadFile(bucketName, r, true); err != nil {
+	if file, err = ServerObj.StorageService.UploadFile(bucketName, r); err != nil {
 		rw.WriteHeader(http.StatusInternalServerError)
 		rw.Write([]byte(utils.ToJson("Error uploading file in bucket.")))
 		return

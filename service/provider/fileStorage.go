@@ -109,57 +109,12 @@ func (fs FileStorage)RemoveFile(bucketName, name string) (error)  {
 	return nil
 }
 
-func (fs FileStorage) UploadFile(bucketName string, request *http.Request, isStreaming bool) (*data.File, error)  {
-	if isStreaming == true {
-		return fs.uploadFileStream(bucketName, request)
-	}
-	return fs.uploadFileNormal(bucketName, request)
-}
-
-func (fs FileStorage) uploadFileStream(bucketName string, request *http.Request) (*data.File, error)  {
-	var fileName string
-	//get the multipart reader for the request.
-	readerStream, err := request.MultipartReader()
-	if err != nil {
-		log.Debug("Error parsing multipart reader %v", err)
-		return &data.File{}, err
-	}
-	//copy each part to destination.
-	for {
-		part, err := readerStream.NextPart()
-		if err == io.EOF {
-			break
-		}
-
-		//if part.FileName() is empty, skip this iteration.
-		if part.FileName() == "" {
-			continue
-		}
-		if fileName == "" {
-			fileName = part.FileName()
-		}
-		dst, err := os.Create(path.Join(fs.rootPath, bucketName, "/", part.FileName()))
-		defer dst.Close()
-
-		if err != nil {
-			log.Debug("Error creating new file %v", err)
-			return &data.File{}, err
-		}
-
-		if _, err := io.Copy(dst, part); err != nil {
-			log.Debug("Error copying file to destination %v", err)
-			return &data.File{}, err
-		}
-	}
-	return fs.GetFile(bucketName, fileName)
-}
-
-func (fs FileStorage) uploadFileNormal(bucketName string, request *http.Request) (*data.File, error)  {
+func (fs FileStorage) UploadFile(bucketName string, request *http.Request) ([]*data.File, error)  {
 	var fileName string
 	err := request.ParseMultipartForm(100000)
 	if err != nil {
 		log.Debug("Error parsing multipart form %v", err)
-		return &data.File{}, err
+		return nil, err
 	}
 
 	//get a ref to the parsed multipart form
@@ -169,6 +124,8 @@ func (fs FileStorage) uploadFileNormal(bucketName string, request *http.Request)
 	//get the *fileheaders
 	files := m.File["file"]
 	fmt.Println("File size %ld", len(files))
+	fileList := make([]*data.File, len(files))
+	index := 0
 	for i, _ := range files {
 		fileName = files[i].Filename
 		//for each fileheader, get a handle to the actual file
@@ -176,7 +133,7 @@ func (fs FileStorage) uploadFileNormal(bucketName string, request *http.Request)
 		defer file.Close()
 		if err != nil {
 			log.Debug("Error opening file received %v", err)
-			return &data.File{}, err
+			return nil, err
 		}
 		//create destination file making sure the path is writeable.
 		var filePath = path.Join(fs.rootPath, bucketName, "/", files[i].Filename)
@@ -185,16 +142,18 @@ func (fs FileStorage) uploadFileNormal(bucketName string, request *http.Request)
 		defer dst.Close()
 		if err != nil {
 			log.Debug("Error creating destination file %v", err)
-			return &data.File{}, err
+			return nil, err
 		}
 		//copy the uploaded file to the destination file
 		if _, err := io.Copy(dst, file); err != nil {
 			log.Debug("Error copying source file to destination file %v", err)
-			return &data.File{}, err
+			return nil, err
 		}
-
+		fileObj, _ := fs.GetFile(bucketName, fileName)
+		fileList[index] = fileObj
+		index++
 	}
-	return fs.GetFile(bucketName, fileName)
+	return fileList, nil
 }
 
 func (fs FileStorage) isDirectory(filePath string) bool  {

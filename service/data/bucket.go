@@ -1,9 +1,7 @@
 package data
 
 import (
-	"time"
 	"fmt"
-	"strconv"
 )
 
 type Bucket struct {

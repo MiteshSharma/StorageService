@@ -13,5 +13,5 @@ type Storage interface {
 	GetFiles(bucketName string) ([]*data.File, error)
 	GetFile(bucketName, name string) (*data.File, error)
 	RemoveFile(bucketName, name string) (error)
-	UploadFile(bucketName string, request *http.Request, isStreaming bool) (*data.File, error)
+	UploadFile(bucketName string, request *http.Request) ([]*data.File, error)
 }

@@ -48,6 +48,6 @@ func (fs StorageService)RemoveFile(containerName, name string) (error)  {
 	return fs.provider.RemoveFile(containerName, name)
 }
 
-func (fs StorageService) UploadFile(bucketName string, request *http.Request, isStreaming bool) (*data.File, error) {
-	return fs.provider.UploadFile(bucketName, request, isStreaming)
+func (fs StorageService) UploadFile(bucketName string, request *http.Request) ([]*data.File, error) {
+	return fs.provider.UploadFile(bucketName, request)
 }
