@@ -24,7 +24,7 @@ func NewS3Storage() *S3Storage {
 		utils.ConfigParam.StorageConfig.S3Storage.KeyId,
 		utils.ConfigParam.StorageConfig.S3Storage.AccessKey, "")
 	awsConfig := &aws.Config{
-		Region: aws.String("us-west-1"),
+		Region: aws.String(utils.ConfigParam.StorageConfig.S3Storage.Region),
 	}
 	session := session.New(awsConfig)
 	connection := s3.New(session)
